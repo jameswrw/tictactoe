@@ -4,17 +4,17 @@ DROP TABLE IF EXISTS matches CASCADE;
 
 -- 2. Create tables with proper constraints
 CREATE TABLE players (
-    user_id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE matches (
-    match_id SERIAL PRIMARY KEY,
-    player_1_id INT NOT NULL REFERENCES players(user_id),
-    player_2_id INT NOT NULL REFERENCES players(user_id),
-    winner_id INT NOT NULL REFERENCES players(user_id),
+    id UUID PRIMARY KEY,
+    player_1_id UUID NOT NULL REFERENCES players(id),
+    player_2_id UUID NOT NULL REFERENCES players(id),
+    winner_id UUID NOT NULL REFERENCES players(id),
     created_at TIMESTAMP WITH TIME ZONE
         NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

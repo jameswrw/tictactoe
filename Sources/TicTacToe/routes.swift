@@ -1,4 +1,6 @@
 import Vapor
+import Fluent
+import FluentPostgresDriver
 
 func routes(_ app: Application) throws {
     app.get { req async in
@@ -26,4 +28,23 @@ func routes(_ app: Application) throws {
         Person(firstName: "James", surname: "Weatherley", age: 52)
     }
 
+    app.post("createPlayer") { req async throws -> HTTPStatus in
+        
+        struct PostPlayer: Decodable {
+            let firstName: String
+            let lastName: String
+        }
+        
+        // Decode the JSON body into our Todo struct
+        let postPlayer = try req.content.decode(PostPlayer.self)
+        
+        // Print or save the data (e.g., to a database)
+        print("Received player: \(postPlayer.firstName) \(postPlayer.lastName)")
+        
+        let player = Player(firstName: postPlayer.firstName, lastName: postPlayer.lastName)
+        try await player.save(on: req.db)
+        
+        // Return a 201 Created status
+        return .created
+    }
 }
