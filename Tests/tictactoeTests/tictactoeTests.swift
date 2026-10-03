@@ -1,9 +1,9 @@
-@testable import hello
+@testable import tictactoe
 import VaporTesting
 import Testing
 
 @Suite("App Tests")
-struct helloTests {
+struct tictactoeTests {
     @Test("Test Hello World Route")
     func helloWorld() async throws {
         try await withApp(configure: configure) { app in

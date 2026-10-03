@@ -15,20 +15,24 @@ final class Match: Model, @unchecked Sendable {
     var id: UUID?
     
     @Field(key: "player_1_id")
-    var player1: String
+    var player1: UUID
     
     @Field(key: "player_2_id")
-    var player2: String
+    var player2: UUID
  
-    @Field(key: "winner")
-    var winner: String?
+    @Field(key: "winner_id")
+    var winner: UUID?
+    
+    @Field(key: "board")
+    var board: String
     
     init() {}
     
-    init(id: UUID? = nil, player1: String, player2: String, winner: String?) {
+    init(id: UUID? = nil, player1: UUID, player2: UUID, winner: UUID?, board: String = ".........") {
         self.id = id
         self.player1 = player1
         self.player2 = player2
         self.winner = winner
+        self.board = board
     }
 }

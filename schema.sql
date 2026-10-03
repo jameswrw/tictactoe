@@ -14,7 +14,8 @@ CREATE TABLE matches (
     id UUID PRIMARY KEY,
     player_1_id UUID NOT NULL REFERENCES players(id),
     player_2_id UUID NOT NULL REFERENCES players(id),
-    winner_id UUID NOT NULL REFERENCES players(id),
+    winner_id UUID REFERENCES players(id),
+    board VARCHAR(9) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE
         NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
