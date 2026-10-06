@@ -13,11 +13,11 @@ struct PatchMatch: Decodable {
 
 func routes(_ app: Application) throws {
     
-    app.get("players") { req async throws -> [Player] in
+    app.get("player") { req async throws -> [Player] in
         try await Player.query(on: req.db).all()
     }
     
-    app.post("createPlayer") { req async throws -> HTTPStatus in
+    app.post("player", "create") { req async throws -> Player in
         
         struct PostPlayer: Decodable {
             let firstName: String
@@ -28,11 +28,10 @@ func routes(_ app: Application) throws {
         let player = Player(firstName: postPlayer.firstName, lastName: postPlayer.lastName)
         try await player.save(on: req.db)
         
-        // Return a 201 Created status
-        return .created
+        return player
     }
     
-    app.post("createMatch") { req async throws -> HTTPStatus in
+    app.post("match", "create") { req async throws -> Match in
         
         struct PostMatch: Decodable {
             let player1: UUID
@@ -43,8 +42,11 @@ func routes(_ app: Application) throws {
         let match = Match(player1: postMatch.player1, player2: postMatch.player2, winner: nil)
         try await match.save(on: req.db)
         
-        // Return a 201 Created status
-        return .created
+        return match
+    }
+    
+    app.get("match") { req async throws -> [Match] in
+        try await Match.query(on: req.db).all()
     }
     
     app.get("match", ":matchID") { req async throws -> Match in
