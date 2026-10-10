@@ -13,24 +13,63 @@ struct PatchMatch: Decodable {
 
 func routes(_ app: Application) throws {
     
+    // MARK: - Players
     app.get("player") { req async throws -> [Player] in
         try await Player.query(on: req.db).all()
     }
     
+    app.get("player", ":playerID", "opponents") { req async throws -> [Player] in
+        guard let playerIDString = req.parameters.get("playerID"),
+              let playerID = UUID(uuidString: playerIDString) else {
+            throw Abort(.badRequest)
+        }
+        return try await Player.query(on: req.db)
+            .filter(\.$id != playerID)
+            .all()
+    }
+    
+    app.post("player", "login") { req async throws -> Player in
+        struct Credentials: Decodable {
+            let userName: String
+            let password: String
+        }
+        let credentials = try req.content.decode(Credentials.self)
+        
+        let player = try await Player.query(on: req.db)
+            .filter(\.$userName == credentials.userName)
+            .first()
+
+        guard let player,
+              try Bcrypt.verify(credentials.password, created: player.hash) else {
+            throw Abort(.badRequest)
+        }
+        
+        return player
+    }
+             
     app.post("player", "create") { req async throws -> Player in
         
         struct PostPlayer: Decodable {
+            let userName: String
+            let password: String
             let firstName: String
             let lastName: String
         }
         
         let postPlayer = try req.content.decode(PostPlayer.self)
-        let player = Player(firstName: postPlayer.firstName, lastName: postPlayer.lastName)
+        let hash = try Bcrypt.hash(postPlayer.password)
+        let player = Player(
+            firstName: postPlayer.firstName,
+            lastName: postPlayer.lastName,
+            userName: postPlayer.userName,
+            hash: hash
+        )
         try await player.save(on: req.db)
         
         return player
     }
     
+    // MARK: - Matches
     app.post("match", "create") { req async throws -> Match in
         
         struct PostMatch: Decodable {
@@ -77,6 +116,7 @@ func routes(_ app: Application) throws {
         return match
     }
     
+    // MARK: - Utils
     @Sendable func moveIfLegal(movePatch: PatchMatch, match: Match, newEntry: Character) -> Bool {
         let offset = movePatch.col + 3 * movePatch.row
         let index = match.board.index(match.board.startIndex, offsetBy: offset)

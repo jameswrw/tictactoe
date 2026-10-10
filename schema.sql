@@ -1,3 +1,4 @@
+-- psql -d tictactoe -f schema.sql
 -- 1. Clean up existing tables if resetting (Optional)
 DROP TABLE IF EXISTS players CASCADE;
 DROP TABLE IF EXISTS matches CASCADE;
@@ -7,6 +8,8 @@ CREATE TABLE players (
     id UUID PRIMARY KEY,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
+    user_name VARCHAR(100) NOT NULL UNIQUE,
+    hash VARCHAR(100) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 

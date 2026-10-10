@@ -20,11 +20,19 @@ final class Player: Model, @unchecked Sendable {
     @Field(key: "last_name")
     var lastName: String
     
+    @Field(key: "user_name")
+    var userName: String
+    
+    @Field(key: "hash")
+    var hash: String
+    
     init() {}
     
-    init(id: UUID? = nil, firstName: String, lastName: String) {
+    init(id: UUID? = nil, firstName: String, lastName: String, userName: String, hash: String) {
         self.id = id
         self.firstName = firstName
         self.lastName = lastName
+        self.userName = userName
+        self.hash = hash
     }
 }
