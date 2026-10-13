@@ -78,6 +78,10 @@ func routes(_ app: Application) throws {
         }
         
         let postMatch = try req.content.decode(PostMatch.self)
+        guard postMatch.player1 != postMatch.player2 else {
+            throw Abort(.badRequest)
+        }
+        
         let match = Match(player1: postMatch.player1, player2: postMatch.player2, winner: nil)
         try await match.save(on: req.db)
         
@@ -86,6 +90,28 @@ func routes(_ app: Application) throws {
     
     app.get("match") { req async throws -> [Match] in
         try await Match.query(on: req.db).all()
+    }
+    
+    app.get("match", "featuring", ":player1ID", "versus", ":player2ID") { req async throws -> [Match] in
+        guard
+            let uuid1String = req.parameters.get("player1ID"),
+            let player1ID = UUID(uuid1String),
+            let uuid2String = req.parameters.get("player2ID"),
+            let player2ID = UUID(uuid2String) else {
+            throw Abort(.badRequest)
+        }
+
+        let player1v2 = try await Match.query(on: req.db)
+            .filter(\.$player1 == player1ID)
+            .filter(\.$player2 == player2ID)
+            .all()
+        
+        let player2v1 = try await Match.query(on: req.db)
+            .filter(\.$player1 == player2ID)
+            .filter(\.$player2 == player1ID)
+            .all()
+        
+        return player1v2 + player2v1
     }
     
     app.get("match", ":matchID") { req async throws -> Match in
