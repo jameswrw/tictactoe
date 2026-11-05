@@ -98,7 +98,11 @@ func routes(_ app: Application) throws {
         
         let move = try req.content.decode(PostMove.self)
         let match = try await matchFrom(uuidString: req.parameters.get("matchID"), database: req.db)
+        
         guard move.player == match.player1 || move.player == match.player2 else {
+            throw Abort(.badRequest)
+        }
+        guard match.winner == nil else {
             throw Abort(.badRequest)
         }
         
@@ -110,6 +114,7 @@ func routes(_ app: Application) throws {
         }
         
         match.board.replaceSubrange((stringIndex...stringIndex), with: move.symbol)
+        checkForWin(match: match, player: move.player, symbol: move.symbol)
         try await match.save(on: req.db)
         
         return match
@@ -146,37 +151,7 @@ func routes(_ app: Application) throws {
     }
     
     // MARK: - Utils
-    @Sendable func moveIfLegal(movePatch: PatchMatch, match: Match, newEntry: Character) -> Bool {
-        let offset = movePatch.col + 3 * movePatch.row
-        let index = match.board.index(match.board.startIndex, offsetBy: offset)
-
-        // No-one has won already, in range and cell is empty
-        guard
-            match.winner == nil,
-            match.board.count == 9,
-            (0...9).contains(offset),
-            match.board[index...index] == "." else {
-            return false
-        }
-        
-        // Check it is the player's turn
-        let xsPlayed = match.board
-            .filter {$0 == "X"}
-            .count
-        let osPlayed = match.board
-            .filter {$0 == "O"}
-            .count
-        
-        guard (newEntry == "X" && xsPlayed == osPlayed) || (newEntry == "O" && xsPlayed == osPlayed - 1) else {
-            return false
-        }
-        
-        // Make move
-        match.board.replaceSubrange(index...index, with: CollectionOfOne(newEntry))
-        return true
-    }
-    
-    @Sendable func checkForWin(match: Match, player: UUID, symbol: Character) {
+    @Sendable func checkForWin(match: Match, player: UUID, symbol: String) {
         let cells = Array(match.board)
         guard cells.count == 9 else {
             return
@@ -189,7 +164,7 @@ func routes(_ app: Application) throws {
         ]
 
         let isWin = winningLines.contains { line in
-            line.allSatisfy { cells[$0] == symbol }
+            line.allSatisfy { String(cells[$0]) == symbol }
         }
 
         if isWin {
