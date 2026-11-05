@@ -88,6 +88,33 @@ func routes(_ app: Application) throws {
         return match
     }
     
+    app.post("match", ":matchID", "play") { req async throws -> Match in
+        struct PostMove: Decodable {
+            let player: UUID
+            let row: Int
+            let col: Int
+            let symbol: String
+        }
+        
+        let move = try req.content.decode(PostMove.self)
+        let match = try await matchFrom(uuidString: req.parameters.get("matchID"), database: req.db)
+        guard move.player == match.player1 || move.player == match.player2 else {
+            throw Abort(.badRequest)
+        }
+        
+        let index = move.row * 3 + move.col
+        let stringIndex = match.board.index(match.board.startIndex, offsetBy: index)
+        let oldMove = match.board[stringIndex]
+        guard oldMove == "." else {
+            throw Abort(.badRequest)
+        }
+        
+        match.board.replaceSubrange((stringIndex...stringIndex), with: move.symbol)
+        try await match.save(on: req.db)
+        
+        return match
+    }
+    
     app.get("match") { req async throws -> [Match] in
         try await Match.query(on: req.db).all()
     }
@@ -116,30 +143,6 @@ func routes(_ app: Application) throws {
     
     app.get("match", ":matchID") { req async throws -> Match in
         try await matchFrom(uuidString: req.parameters.get("matchID"), database: req.db)
-    }
-    
-    app.patch("match", ":matchID") { req async throws -> Match in
-        
-        let patchMatch = try req.content.decode(PatchMatch.self)
-        let match = try await matchFrom(uuidString: req.parameters.get("matchID"), database: req.db)
-        
-        // Who's moving?
-        let move: Character = if patchMatch.playerID == match.player1 {
-            "X"
-        } else if patchMatch.playerID == match.player2 {
-            "O"
-        } else {
-            throw Abort(.notFound)
-        }
-        
-        guard moveIfLegal(movePatch: patchMatch, match: match, newEntry: move) else {
-            throw(Abort(.badRequest))
-        }
-        
-        checkForWin(match: match, player: patchMatch.playerID, symbol: move)
-        try await match.save(on: req.db)
-        
-        return match
     }
     
     // MARK: - Utils
