@@ -13,9 +13,16 @@ extension Player: Content {}
 
 struct PlayerController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
-        routes.post("player", "login", use: login)
-        routes.get("player", ":playerID", "opponents", use: fetchOpponents)
-        routes.post("player", "create", use: createPlayer)
+        
+        let players = routes.grouped("player")
+        let protected = players.grouped(
+            PlayerTokenAuthenticator(),
+            Player.guardMiddleware()
+        )
+        
+        players.post("login", use: login)
+        protected.get(":playerID", "opponents", use: fetchOpponents)
+        protected.post("create", use: createPlayer)
     }
     
     func login(req: Request) async throws -> LoginResponse {

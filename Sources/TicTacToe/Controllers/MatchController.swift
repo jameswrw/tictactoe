@@ -13,9 +13,15 @@ extension Match: Content {}
 
 struct MatchController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
-        routes.post("match", "create", use: createMatch)
-        routes.post("match", ":matchID", "play", use: playMove)
-        routes.get("match", "featuring", ":player1ID", "versus", ":player2ID", use: fetchMatchesFeaturingPlayers)
+        
+        let protected = routes.grouped("match").grouped(
+            PlayerTokenAuthenticator(),
+            Player.guardMiddleware()
+        )
+        
+        protected.post("create", use: createMatch)
+        protected.post(":matchID", "play", use: playMove)
+        protected.get("featuring", ":player1ID", "versus", ":player2ID", use: fetchMatchesFeaturingPlayers)
     }
     
     func fetchMatchesFeaturingPlayers(req: Request) async throws -> [Match] {
