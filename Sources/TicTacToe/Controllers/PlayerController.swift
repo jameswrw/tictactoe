@@ -18,11 +18,13 @@ struct PlayerController: RouteCollection {
         routes.post("player", "create", use: createPlayer)
     }
     
-    func login(req: Request) async throws -> Player {
+    func login(req: Request) async throws -> LoginResponse {
+        
         struct Credentials: Decodable {
             let userName: String
             let password: String
         }
+        
         let credentials = try req.content.decode(Credentials.self)
         
         let player = try await Player.query(on: req.db)
@@ -34,7 +36,15 @@ struct PlayerController: RouteCollection {
             throw Abort(.badRequest)
         }
         
-        return player
+        let tokenValue = [UInt8].random(count: 32).base64
+        let token = PlayerToken(
+            value: tokenValue,
+            playerID: try player.requireID(),
+            expiresAt: Date().addingTimeInterval(60 * 60 * 24 * 30)
+        )
+        try await token.save(on: req.db)
+
+        return LoginResponse(token: token.value, player: player)
     }
     
     func fetchOpponents(req: Request) async throws -> [Player] {

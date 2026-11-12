@@ -8,6 +8,7 @@ func configure(_ app: Application) async throws {
     // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
 
     connectPostgre(app)
+    app.migrations.add(CreatePlayerToken())
     
     // register routes
     try routes(app)

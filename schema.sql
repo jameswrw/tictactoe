@@ -2,6 +2,7 @@
 -- 1. Clean up existing tables if resetting (Optional)
 DROP TABLE IF EXISTS players CASCADE;
 DROP TABLE IF EXISTS matches CASCADE;
+DROP TABLE IF EXISTS player_tokens CASCADE;
 
 -- 2. Create tables with proper constraints
 CREATE TABLE players (
@@ -29,6 +30,12 @@ CREATE TABLE matches (
         CHECK (winner_id IN (player_1_id, player_2_id))
 );
 
+CREATE TABLE player_tokens (
+    id UUID PRIMARY KEY,
+    value VARCHAR(100) NOT NULL UNIQUE,
+    player_id UUID NOT NULL REFERENCES players(id),
+    expires_at TIMESTAMP
+);
 
 -- 3. Add Indexes for Query Performance
 -- CREATE INDEX idx_player_1_id ON orders(player_1_id);
