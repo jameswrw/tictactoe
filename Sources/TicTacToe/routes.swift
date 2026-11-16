@@ -14,11 +14,11 @@ struct AuthPayload: JWTPayload {
 }
 
 func routes(_ app: Application) throws {
-    try app.register(collection: PlayerController())
-    try app.register(collection: MatchController())
-    
     let connections = ConnectionManager() // actor or class, injected via app.storage in production
 
+    try app.register(collection: PlayerController())
+    try app.register(collection: MatchController(connections: connections))
+    
     app.webSocket("ws") { req, ws async in
         await connections.setup(req: req, ws: ws)
     }

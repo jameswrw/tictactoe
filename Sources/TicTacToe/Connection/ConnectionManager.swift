@@ -18,7 +18,7 @@ struct Connection {
 
 actor ConnectionManager {
     private var connections: [UUID: Connection] = [:]
-
+    
     func add(_ info: Connection) {
         connections[info.userID] = info
     }
@@ -46,6 +46,30 @@ actor ConnectionManager {
                 connections[key] = value
             }
         }
+    }
+    
+    func postMatch(_ match: Match, to userID: UUID) throws {
+        do {
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(MatchDTO(from: match))
+            let payload = SocketMessage(type: .match, data: data)
+            let payloadData = try encoder.encode(payload)
+            postMessage(payloadData, to: userID)
+        } catch {
+            print("Failed to encode Match: \(error)")
+            throw Abort(.internalServerError, reason: "Failed to encode match payload.")
+        }
+    }
+
+    private func postMessage(_ data: Data, to userID: UUID) {
+        guard let connection = connections[userID] else {
+            return
+        }
+        if connection.ws.isClosed {
+            return
+        }
+        // WebSocket.send is async; ensure we await to propagate backpressure correctly.
+        connection.ws.send(data)
     }
     
     func setup(req: Request, ws: WebSocket) async {
@@ -89,9 +113,6 @@ actor ConnectionManager {
         guard let keys = req.application.storage[JWTKeysStorageKey.self] else {
             throw Abort(.internalServerError, reason: "JWT keys not configured")
         }
-        
-        let foo = try await keys.getKey(for: "ttt")
-        print(foo)
 
         do {
             // Verify the token using configured JWT signers on the application

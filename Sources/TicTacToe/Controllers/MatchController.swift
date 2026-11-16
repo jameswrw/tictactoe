@@ -12,6 +12,8 @@ import FluentPostgresDriver
 extension Match: Content {}
 
 struct MatchController: RouteCollection {
+    let connections: ConnectionManager
+    
     func boot(routes: any RoutesBuilder) throws {
         
         let protected = routes.grouped("match").grouped(
@@ -75,6 +77,9 @@ struct MatchController: RouteCollection {
         checkForWin(match: match, player: move.player, symbol: move.symbol)
         try await match.save(on: req.db)
         
+        let playerID = (move.player == match.player1) ? match.player2 : match.player1
+        try await connections.postMatch(match, to: playerID)
+
         return match
     }
     
