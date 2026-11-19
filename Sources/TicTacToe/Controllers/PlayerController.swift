@@ -21,8 +21,8 @@ struct PlayerController: RouteCollection {
         )
         
         players.post("login", use: login)
+        players.post("create", use: createPlayer)
         protected.get(":playerID", "opponents", use: fetchOpponents)
-        protected.post("create", use: createPlayer)
     }
     
     func login(req: Request) async throws -> LoginResponse {

@@ -74,6 +74,7 @@ struct MatchController: RouteCollection {
         }
         
         match.board.replaceSubrange((stringIndex...stringIndex), with: move.symbol)
+        togglePlayer(match)
         checkForWin(match: match, player: move.player, symbol: move.symbol)
         try await match.save(on: req.db)
         
@@ -81,6 +82,14 @@ struct MatchController: RouteCollection {
         try await connections.postMatch(match, to: playerID)
 
         return match
+    }
+    
+    private func togglePlayer(_ match: Match) {
+        if match.playerToMove == match.player1 {
+            match.playerToMove = match.player2
+        } else {
+            match.playerToMove = match.player1
+        }
     }
     
     func createMatch(req: Request) async throws -> Match {
@@ -93,8 +102,12 @@ struct MatchController: RouteCollection {
         guard postMatch.player1 != postMatch.player2 else {
             throw Abort(.badRequest)
         }
-        
-        let match = Match(player1: postMatch.player1, player2: postMatch.player2, winner: nil)
+
+        let match = Match(
+            player1: postMatch.player1,
+            player2: postMatch.player2,
+            winner: nil
+        )
         try await match.save(on: req.db)
         
         return match
@@ -119,6 +132,7 @@ struct MatchController: RouteCollection {
 
         if isWin {
             match.winner = player
+            match.playerToMove = nil
         }
     }
     

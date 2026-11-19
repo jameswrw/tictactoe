@@ -8,17 +8,19 @@
 import Foundation
 
 struct MatchDTO: Codable {
-       let id: UUID?
-       let player1: UUID
-       let player2: UUID
-       let winner: UUID?
-       let board: String
-
-       init(from match: Match) {
-           self.id = match.id
-           self.player1 = match.player1
-           self.player2 = match.player2
-           self.winner = match.winner
-           self.board = match.board
-       }
-   }
+    let id: UUID?
+    let player1: UUID
+    let player2: UUID
+    let winner: UUID?
+    let playerToMove: UUID?
+    let board: String
+    
+    init(from match: Match) {
+        self.id = match.id
+        self.player1 = match.player1
+        self.player2 = match.player2
+        self.winner = match.winner
+        self.playerToMove = match.playerToMove
+        self.board = match.board
+    }
+}

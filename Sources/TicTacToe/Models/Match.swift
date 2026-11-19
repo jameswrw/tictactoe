@@ -1,6 +1,6 @@
 //
 //  Match.swift
-//  hello
+//  TicTacToe
 //
 //  Created by James Weatherley on 02/10/2026.
 //
@@ -23,16 +23,26 @@ final class Match: Model, @unchecked Sendable {
     @Field(key: "winner_id")
     var winner: UUID?
     
+    @Field(key: "player_to_move")
+    var playerToMove: UUID?
+    
     @Field(key: "board")
     var board: String
     
     init() {}
     
-    init(id: UUID? = nil, player1: UUID, player2: UUID, winner: UUID?, board: String = ".........") {
+    init(
+        id: UUID? = nil,
+        player1: UUID,
+        player2: UUID,
+        winner: UUID?,
+        board: String = "........."
+    ) {
         self.id = id
         self.player1 = player1
         self.player2 = player2
         self.winner = winner
+        self.playerToMove = player1
         self.board = board
     }
 }
